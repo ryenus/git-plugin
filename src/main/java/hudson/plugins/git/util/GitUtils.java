@@ -50,6 +50,25 @@ public class GitUtils {
         return revisions.values();
     }
 
+    public Collection<Revision> getTags(String pattern) {
+        Map<String, Revision> map = new HashMap<String, Revision>();
+        Set<String> tags = git.getTagNames(pattern);
+
+        for (String tag : tags) {
+            ObjectId sha = git.revParse(tag);
+            String sha1 = sha.getName();
+            Revision rev = map.get(sha1);
+            if (rev == null) {
+                rev = new Revision(sha);
+                map.put(sha1, rev);
+            }
+
+            rev.getBranches().add(new Branch(tag, sha));
+        }
+
+        return map.values();
+    }
+
     /**
      * Return the revision containing the branch name.
      * @param branchName

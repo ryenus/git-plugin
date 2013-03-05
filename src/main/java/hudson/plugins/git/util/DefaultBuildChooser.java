@@ -3,6 +3,7 @@ package hudson.plugins.git.util;
 import hudson.Extension;
 import hudson.model.TaskListener;
 import hudson.plugins.git.*;
+
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -161,42 +162,62 @@ public class DefaultBuildChooser extends BuildChooser {
      */
     private List<Revision> getAdvancedCandidateRevisions(boolean isPollCall, TaskListener listener, GitUtils utils, BuildData data) throws GitException, IOException {
         // 1. Get all the (branch) revisions that exist
-        List<Revision> revs = new ArrayList<Revision>(utils.getAllBranchRevisions());
-        verbose(listener, "Starting with all the branches: {0}", revs);
+        List<Revision> revs = new ArrayList<Revision>();
 
-        // 2. Filter out any revisions that don't contain any branches that we
-        // actually care about (spec)
-        for (Iterator<Revision> i = revs.iterator(); i.hasNext();) {
-            Revision r = i.next();
+        if (! gitSCM.getSkipBranches()) {
+            Collection<Revision> brRevs = utils.getAllBranchRevisions();
+            revs.addAll(brRevs);
+            verbose(listener, "Starting with all the branches: {0}", revs);
 
-            // filter out uninteresting branches
-            for (Iterator<Branch> j = r.getBranches().iterator(); j.hasNext();) {
-                Branch b = j.next();
-                boolean keep = false;
-                for (BranchSpec bspec : gitSCM.getBranches()) {
-                    if (bspec.matches(b.getName())) {
-                        keep = true;
-                        break;
+            // 2. Filter out any revisions that don't contain any branches that we
+            // actually care about (spec)
+            for (Iterator<Revision> i = revs.iterator(); i.hasNext();) {
+                Revision r = i.next();
+
+                // filter out uninteresting branches
+                for (Iterator<Branch> j = r.getBranches().iterator(); j.hasNext();) {
+                    Branch b = j.next();
+                    boolean keep = false;
+                    for (BranchSpec bspec : gitSCM.getBranches()) {
+                        if (bspec.matches(b.getName())) {
+                            keep = true;
+                            break;
+                        }
+                    }
+
+                    if (!keep) {
+                        verbose(listener, "Ignoring {0} because it doesn''t match branch specifier", b);
+                        j.remove();
                     }
                 }
 
-                if (!keep) {
-                    verbose(listener, "Ignoring {0} because it doesn''t match branch specifier", b);
-                    j.remove();
+                if (r.getBranches().size() == 0) {
+                    verbose(listener, "Ignoring {0} because we don''t care about any of the branches that point to it", r);
+                    i.remove();
                 }
             }
 
-            if (r.getBranches().size() == 0) {
-                verbose(listener, "Ignoring {0} because we don''t care about any of the branches that point to it", r);
-                i.remove();
-            }
+            verbose(listener, "After branch filtering: {0}", revs);
+
+            // 3. We only want 'tip' revisions
+            revs = utils.filterTipBranches(revs);
+            verbose(listener, "After non-tip filtering: {0}", revs);
         }
 
-        verbose(listener, "After branch filtering: {0}", revs);
+        String pattern = gitSCM.getTag();
+        if (! pattern.isEmpty()) {
+            verbose(listener, "Looking for tags that match: {0}", pattern);
+            // 1. Get all tag revisions that exist
+            Collection<Revision> tagRevs = utils.getTags(pattern);
+            if (tagRevs.size() > 0) {
+                verbose(listener, "Starting with matched tags: {0}", tagRevs);
 
-        // 3. We only want 'tip' revisions
-        revs = utils.filterTipBranches(revs);
-        verbose(listener, "After non-tip filtering: {0}", revs);
+                // 3. we only want 'tip' reviosions (tagged)
+                tagRevs = utils.filterTipBranches(tagRevs);
+
+                revs.addAll(tagRevs);
+            }
+        }
 
         // 4. Finally, remove any revisions that have already been built.
         verbose(listener, "Removing what''s already been built: {0}", data.getBuildsByBranchName());
@@ -207,6 +228,7 @@ public class DefaultBuildChooser extends BuildChooser {
                 i.remove();
             }
         }
+
         verbose(listener, "After filtering out what''s already been built: {0}", revs);
 
         // if we're trying to run a build (not an SCM poll) and nothing new

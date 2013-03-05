@@ -119,15 +119,15 @@ public class BuildData implements Action, Serializable, Cloneable {
             }
 
             return false;
-    	}
-    	catch(Exception ex) {
+        }
+        catch(Exception ex) {
             return false;
-    	}
+        }
     }
 
     public void saveBuild(Build build) {
-    	lastBuild = build;
-    	for(Branch branch : build.revision.getBranches()) {
+        lastBuild = build;
+        for(Branch branch : build.revision.getBranches()) {
             buildsByBranchName.put(fixNull(branch.getName()), build);
     	}
     }
