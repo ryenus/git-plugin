@@ -51,6 +51,23 @@ public class GitUtils {
     }
 
     /**
+	 * Return a list of "Revisions" corresponding to all existing tags.
+	 *
+	 * @return
+	 * @throws IOException
+	 * @throws GitException
+	 */
+	public Collection<Revision> getAllTagRevisions() throws GitException, IOException {
+		Set<Revision> revs = new HashSet<Revision>();
+		Set<String> tags = git.getTagNames("*");
+		for (String t : tags) {
+			Revision rev = new Revision(git.revParse(t));
+			revs.add(rev);
+		}
+		return revs;
+	}
+
+    /**
      * Return the revision containing the branch name.
      * @param branchName
      * @return
