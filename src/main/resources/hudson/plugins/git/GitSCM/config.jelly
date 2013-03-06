@@ -65,6 +65,12 @@
 
   </f:entry>
 
+  <f:entry title="Tags to build" help="/plugin/git/tags.html">
+    <f:entry title="Tag Specifier (blank for none):" field="tag">
+          <f:textbox />
+    </f:entry>
+  </f:entry>
+
   <f:advanced>
     <f:entry title="${%Included Regions}" field="includedRegions" help="/plugin/git/help-includedRegions.html">
         <f:textarea />

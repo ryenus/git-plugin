@@ -198,6 +198,18 @@ public class DefaultBuildChooser extends BuildChooser {
         revs = utils.filterTipBranches(revs);
         verbose(listener, "After non-tip filtering: {0}", revs);
 
+        String pattern = gitSCM.getTag();
+        verbose(listener, "Looking for tags that match: {0}", pattern);
+        Map<String, Revision> tags = utils.getTags(pattern);
+        if (tags.size() > 0) {
+            // 1. Get all tag revisions that exist
+            Collection<Revision> tagRevs = tags.values();
+            verbose(listener, "Starting with matched tags: {0}", tagRevs);
+
+            // 3. we only want 'tip' reviosions (tagged)
+            // FIXME:
+        }
+
         // 4. Finally, remove any revisions that have already been built.
         verbose(listener, "Removing what''s already been built: {0}", data.getBuildsByBranchName());
         for (Iterator<Revision> i = revs.iterator(); i.hasNext();) {

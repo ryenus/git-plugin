@@ -51,21 +51,31 @@ public class GitUtils {
     }
 
     /**
-	 * Return a list of "Revisions" corresponding to all existing tags.
-	 *
-	 * @return
-	 * @throws IOException
-	 * @throws GitException
-	 */
-	public Collection<Revision> getAllTagRevisions() throws GitException, IOException {
-		Set<Revision> revs = new HashSet<Revision>();
-		Set<String> tags = git.getTagNames("*");
-		for (String t : tags) {
-			Revision rev = new Revision(git.revParse(t));
-			revs.add(rev);
-		}
-		return revs;
-	}
+     * Return a list of "Revisions" corresponding to all existing tags.
+     *
+     * @return
+     * @throws IOException
+     * @throws GitException
+     */
+    public Collection<Revision> getAllTagRevisions() throws GitException, IOException {
+        Set<Revision> revs = new HashSet<Revision>();
+        Set<String> tags = git.getTagNames("*");
+        for (String t : tags) {
+            Revision rev = new Revision(git.revParse(t));
+            revs.add(rev);
+        }
+        return revs;
+    }
+
+    public Map<String, Revision> getTags(String pattern) {
+        Set<String> tags = git.getTagNames(pattern);
+        Map<String, Revision> map = new HashMap<String, Revision>();
+        for (String t : tags) {
+            Revision rev = new Revision(git.revParse(t));
+            map.put(t, rev);
+        }
+        return map;
+    }
 
     /**
      * Return the revision containing the branch name.
