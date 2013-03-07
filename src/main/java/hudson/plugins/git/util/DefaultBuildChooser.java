@@ -208,6 +208,10 @@ public class DefaultBuildChooser extends BuildChooser {
 
             // 3. we only want 'tip' reviosions (tagged)
             // FIXME:
+            tagRevs = utils.filterTipBranches(tagRevs);
+            if (!tagRevs.isEmpty()) {
+                revs.addAll(tagRevs);
+            }
         }
 
         // 4. Finally, remove any revisions that have already been built.
