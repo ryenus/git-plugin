@@ -203,6 +203,9 @@ public class GitSCM extends SCM implements Serializable {
 
         tag.trim();
         if (tag.matches("^((refs/tags/)?(?![-])[-_.a-zA-Z0-9*]+)(\\s+((refs/tags/)?(?![-])[-_.a-zA-Z0-9*]+))*$")) {
+            if (tag.startsWith("refs/tags/")) {
+                tag = tag.replaceFirst("refs/tags/", "");
+            }
             this.tag = tag;
         } else {
             this.tag = "";
