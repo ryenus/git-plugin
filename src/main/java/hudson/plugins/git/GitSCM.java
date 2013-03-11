@@ -122,6 +122,7 @@ public class GitSCM extends SCM implements Serializable {
     private String includedRegions;
     private String scmName;
     private String tag;
+    private boolean skipBranches;
 
     public Collection<SubmoduleConfig> getSubmoduleCfg() {
         return submoduleCfg;
@@ -149,6 +150,7 @@ public class GitSCM extends SCM implements Serializable {
                 createRepoList(repositoryUrl),
                 Collections.singletonList(new BranchSpec("")),
                 null,
+                false,
                 null,
                 false, Collections.<SubmoduleConfig>emptyList(), false,
                 false, new DefaultBuildChooser(), null, null, false, null,
@@ -162,6 +164,7 @@ public class GitSCM extends SCM implements Serializable {
             List<UserRemoteConfig> userRemoteConfigs,
             List<BranchSpec> branches,
             String tag,
+            boolean skipBranches,
             UserMergeOptions userMergeOptions,
             Boolean doGenerateSubmoduleConfigurations,
             Collection<SubmoduleConfig> submoduleCfg,
@@ -203,13 +206,13 @@ public class GitSCM extends SCM implements Serializable {
 
         tag.trim();
         if (tag.matches("^((refs/tags/)?(?![-])[-_.a-zA-Z0-9*]+)(\\s+((refs/tags/)?(?![-])[-_.a-zA-Z0-9*]+))*$")) {
-            if (tag.startsWith("refs/tags/")) {
-                tag = tag.replaceFirst("refs/tags/", "");
-            }
+            tag = tag.replace("refs/tags/", "");
             this.tag = tag;
         } else {
             this.tag = "";
         }
+
+        this.skipBranches = skipBranches;
 
         this.localBranch = Util.fixEmptyAndTrim(localBranch);
 
@@ -1705,6 +1708,10 @@ public class GitSCM extends SCM implements Serializable {
 
     public String getTag() {
         return tag;
+    }
+
+    public boolean getSkipBranches() {
+        return skipBranches;
     }
 
     @Exported

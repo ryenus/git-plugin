@@ -279,4 +279,9 @@ public class GitUtils {
     }
 
     private static final Logger LOGGER = Logger.getLogger(GitUtils.class.getName());
+
+    public void makeBranch(Revision revision) {
+        String sha1 = revision.getSha1String();
+        git.checkout(sha1, "__bb_" + sha1);
+    }
 }
