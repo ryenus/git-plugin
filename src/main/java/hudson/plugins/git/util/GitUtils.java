@@ -50,31 +50,23 @@ public class GitUtils {
         return revisions.values();
     }
 
-    /**
-     * Return a list of "Revisions" corresponding to all existing tags.
-     *
-     * @return
-     * @throws IOException
-     * @throws GitException
-     */
-    public Collection<Revision> getAllTagRevisions() throws GitException, IOException {
-        Set<Revision> revs = new HashSet<Revision>();
-        Set<String> tags = git.getTagNames("*");
-        for (String t : tags) {
-            Revision rev = new Revision(git.revParse(t));
-            revs.add(rev);
-        }
-        return revs;
-    }
-
-    public Map<String, Revision> getTags(String pattern) {
-        Set<String> tags = git.getTagNames(pattern);
+    public Collection<Revision> getTags(String pattern) {
         Map<String, Revision> map = new HashMap<String, Revision>();
-        for (String t : tags) {
-            Revision rev = new Revision(git.revParse(t));
-            map.put(t, rev);
+        Set<String> tags = git.getTagNames(pattern);
+
+        for (String tag : tags) {
+            ObjectId sha = git.revParse(tag);
+            String sha1 = sha.getName();
+            Revision rev = map.get(sha1);
+            if (rev == null) {
+                rev = new Revision(sha);
+                map.put(sha1, rev);
+            }
+
+            rev.getBranches().add(new Branch(tag, sha));
         }
-        return map;
+
+        return map.values();
     }
 
     /**
@@ -279,9 +271,4 @@ public class GitUtils {
     }
 
     private static final Logger LOGGER = Logger.getLogger(GitUtils.class.getName());
-
-    public void makeBranch(Revision revision) {
-        String sha1 = revision.getSha1String();
-        git.checkout(sha1, "__bb_" + sha1);
-    }
 }

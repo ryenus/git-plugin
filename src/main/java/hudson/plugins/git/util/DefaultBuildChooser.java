@@ -205,22 +205,17 @@ public class DefaultBuildChooser extends BuildChooser {
         }
 
         String pattern = gitSCM.getTag();
-        verbose(listener, "Looking for tags that match: {0}", pattern);
-        Map<String, Revision> tags = utils.getTags(pattern);
-        if (tags.size() > 0) {
+        if (! pattern.isEmpty()) {
+            verbose(listener, "Looking for tags that match: {0}", pattern);
             // 1. Get all tag revisions that exist
-            Collection<Revision> tagRevs = tags.values();
-            verbose(listener, "Starting with matched tags: {0}", tagRevs);
+            Collection<Revision> tagRevs = utils.getTags(pattern);
+            if (tagRevs.size() > 0) {
+                verbose(listener, "Starting with matched tags: {0}", tagRevs);
 
-            // 3. we only want 'tip' reviosions (tagged)
-            // FIXME:
-            tagRevs = utils.filterTipBranches(tagRevs);
-            if (!tagRevs.isEmpty()) {
+                // 3. we only want 'tip' reviosions (tagged)
+                tagRevs = utils.filterTipBranches(tagRevs);
+
                 revs.addAll(tagRevs);
-            }
-
-            for (Revision revision : tagRevs) {
-                utils.makeBranch(revision);
             }
         }
 

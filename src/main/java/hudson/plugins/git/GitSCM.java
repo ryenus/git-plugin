@@ -1084,7 +1084,7 @@ public class GitSCM extends SCM implements Serializable {
             return null;
         }
         if (candidates.size() > 1) {
-            logger.println("Multiple candidate revisions");
+            logger.println("Multiple candidate revisions " + candidates.size());
             AbstractProject<?, ?> project = build.getProject();
             if (!project.isDisabled()) {
                 logger.println("Scheduling another build to catch up with " + project.getFullDisplayName());
@@ -1143,7 +1143,6 @@ public class GitSCM extends SCM implements Serializable {
         environment.put(GIT_COMMIT, revToBuild.getSha1String());
         Branch branch = revToBuild.getBranches().iterator().next();
         environment.put(GIT_BRANCH, branch.getName());
-
         final BuildChooserContext context = new BuildChooserContextImpl(build.getProject(),build);
 
         final String remoteBranchName = getParameterString(mergeOptions.getRemoteBranchName(), build);
@@ -1249,14 +1248,13 @@ public class GitSCM extends SCM implements Serializable {
                         }
                     }
 
-                    checkout(git, revToBuild.getSha1(), paramLocalBranch);
+                    checkout(git, revToBuild.getBranches().iterator().next().getName());
 
                     if (git.hasGitModules() && !disableSubmodules) {
                         // This ensures we don't miss changes to submodule paths and allows
                         // seamless use of bare and non-bare superproject repositories.
                         git.setupSubmoduleUrls(revToBuild, listener);
                         git.submoduleUpdate(recursiveSubmodules);
-
                     }
 
                     // if(compileSubmoduleCompares)
@@ -1283,6 +1281,10 @@ public class GitSCM extends SCM implements Serializable {
         build.addAction(new GitTagAction(build, buildData));
 
         return true;
+    }
+
+    protected void checkout(GitClient git, String tag) {
+        git.checkout(tag);
     }
 
     /**
@@ -1332,6 +1334,9 @@ public class GitSCM extends SCM implements Serializable {
                         listener.getLogger().println("Could not record history. Previous build's commit, " + lastRevWas.getSHA1().name()
                                 + ", does not exist in the current repository.");
                     }
+                } else if (git.tagExists(b.getName())) {
+                    String master = git.getRepository().getRef("master").getObjectId().name();
+                    putChangelogDiffs(git, b.getName(), master, revToBuild.getSha1().name(), out);
                 } else {
                     listener.getLogger().println("No change to record in branch " + b.getName());
                 }
